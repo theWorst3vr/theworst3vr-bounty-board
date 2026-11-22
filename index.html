@@ -30,6 +30,16 @@
 <div class="panel"><h2>🛡️ BOARD SECURITY</h2><p class="hint">Public visitors can submit and view published bounties. Captain actions are protected by Supabase sign-in and database Row Level Security.</p></div>
 </aside></div>
 <div class="status" id="connectionStatus">Connecting to the shared bounty database…</div>
+<section class="panel" id="leaderboardPanel" style="margin-top:18px">
+  <div class="topline">
+    <h2>👑 THE CREW LEADERBOARD</h2>
+    <span class="captain-badge">HALL OF FAME</span>
+  </div>
+  <p class="hint">Earn your place among legends. Complete bounties and collect points!</p>
+  <div id="crewPodium"></div>
+  <div id="crewRankings"></div>
+  <div class="hint" id="crewTotals"></div>
+</section>
 </main>
 <script>
 (() => {
@@ -63,6 +73,35 @@
     $('loginState').textContent=isCaptain?'UNLOCKED':'LOCKED';
     $('captainState').textContent=isCaptain?'CAPTAIN SIGNED IN':'PUBLIC BOARD';
   }
+  function renderLeaderboard(items){
+  const totals = new Map();
+
+  items.filter(x => x.status === 'done').forEach(x => {
+    const name = String(x.viewer || 'Unknown crew').trim();
+    const member = totals.get(name) || {points:0,bounties:0};
+    member.points += Number(x.points_awarded) || 0;
+    member.bounties += 1;
+    totals.set(name,member);
+  });
+
+  const ranked = [...totals.entries()]
+    .map(([name,data]) => ({name,...data}))
+    .sort((a,b) => b.points-a.points || b.bounties-a.bounties);
+
+  $('crewPodium').innerHTML = ranked.length
+    ? ranked.slice(0,3).map((m,i) =>
+      `<div class="entry"><b>${['🥇','🥈','🥉'][i]} ${esc(m.name)}</b><p class="meta">${m.points} points · ${m.bounties} completed bounties</p></div>`
+    ).join('')
+    : '<p class="hint">The crew legends will appear here!</p>';
+
+  $('crewRankings').innerHTML = ranked.slice(3).map((m,i) =>
+    `<div class="entry"><b>#${i+4} ${esc(m.name)}</b><p class="meta">${m.points} points · ${m.bounties} completed</p></div>`
+  ).join('');
+
+  const totalPoints = ranked.reduce((sum,m) => sum+m.points,0);
+  $('crewTotals').textContent =
+    `🏴‍☠️ ${ranked.length} crew members · ${totalPoints} total points · ${ranked.reduce((sum,m)=>sum+m.bounties,0)} completed bounties`;
+}
   async function loadBounties(){
     $('connectionStatus').textContent='Refreshing shared bounty board…';
     let query=client.from('bounties').select('*').order('created_at',{ascending:false});
@@ -70,6 +109,7 @@
     const {data,error}=await query;
     if(error){$('connectionStatus').textContent='Database error: '+error.message;return;}
     cached=data||[];
+    renderLeaderboard(cached);
     const publicItems=cached.filter(x=>x.status!=='pending');
     $('count').textContent='('+cached.filter(x=>x.status==='approved').length+' active)';
     const shown=filtered(publicItems);
@@ -104,7 +144,19 @@
     const id=btn.dataset.id, action=btn.dataset.action;btn.disabled=true;
     let result;
     if(action==='approve') result=await client.from('bounties').update({status:'approved'}).eq('id',id);
-    else if(action==='complete') result=await client.from('bounties').update({status:'done'}).eq('id',id);
+   else if(action==='complete'){
+  const entered=prompt('How many points should this crew member receive?');
+  if(entered===null){btn.disabled=false;return;}
+  const points=Number(entered);
+  if(!Number.isInteger(points)||points<0){
+    alert('Please enter a whole number of 0 or higher.');
+    btn.disabled=false;
+    return;
+  }
+  result=await client.from('bounties')
+    .update({status:'done',points_awarded:points})
+    .eq('id',id);
+}
     else if(action==='reject') result=await client.from('bounties').delete().eq('id',id);
     if(result?.error){alert('Action failed: '+result.error.message);btn.disabled=false;return;}
     await loadBounties();
