@@ -110,9 +110,15 @@
       const earned = achievements.filter(a=>a.test(m));
       const next = [250,1000,2500].find(p=>m.points<p) || 2500;
       const progress = Math.min(100,m.points/next*100);
+      const crewRank =
+  m.points >= 2500 ? '👑 Pirate King' :
+  m.points >= 1000 ? '🔥 Sea Legend' :
+  m.points >= 250 ? '💎 Grand Line Veteran' :
+  m.points >= 50 ? '⚔️ Pirate Warrior' :
+  '🏴‍☠️ Rookie Pirate';
       return `
         <details class="entry">
-          <summary><b>🏴‍☠️ ${esc(m.name)}</b> — ${m.points} points</summary>
+          <summary><b>🏴‍☠️ ${esc(m.name)}</b> — <b>${crewRank}</b> — ${m.points} points</summary>
           <p class="meta">⚔️ ${m.bounties} completed bounties</p>
           <p><b>🏆 Achievements (${earned.length}/6)</b></p>
           <p>${earned.length ? earned.map(a=>a.icon+' '+a.name).join(' · ') : 'No badges earned yet'}</p>
