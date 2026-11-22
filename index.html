@@ -40,6 +40,15 @@
   <div id="crewRankings"></div>
   <div class="hint" id="crewTotals"></div>
 </section>
+  <section class="panel" id="crewProfilePanel" style="margin-top:18px">
+  <div class="topline">
+    <h2>🏴‍☠️ CREW MEMBER PROFILES</h2>
+    <span class="captain-badge">CREW HALL OF LEGENDS</span>
+  </div>
+  <div id="crewProfiles">
+    <p class="hint">Select a crew member from the leaderboard to view their profile!</p>
+  </div>
+</section>
 </main>
 <script>
 (() => {
@@ -87,6 +96,33 @@
   const ranked = [...totals.entries()]
     .map(([name,data]) => ({name,...data}))
     .sort((a,b) => b.points-a.points || b.bounties-a.bounties);
+      const achievements = [
+    {name:'First Blood',icon:'⚔️',test:m=>m.bounties>=1},
+    {name:'Bounty Hunter',icon:'🏴‍☠️',test:m=>m.bounties>=5},
+    {name:'Treasure Hunter',icon:'💎',test:m=>m.points>=250},
+    {name:'Elite Crew',icon:'🔥',test:m=>m.bounties>=10},
+    {name:'Legend of the Seas',icon:'👑',test:m=>m.points>=1000},
+    {name:"Pirate King's Crew",icon:'🌊',test:m=>m.points>=2500}
+  ];
+
+  $('crewProfiles').innerHTML = ranked.length
+    ? ranked.map(m => {
+      const earned = achievements.filter(a=>a.test(m));
+      const next = [250,1000,2500].find(p=>m.points<p) || 2500;
+      const progress = Math.min(100,m.points/next*100);
+      return `
+        <details class="entry">
+          <summary><b>🏴‍☠️ ${esc(m.name)}</b> — ${m.points} points</summary>
+          <p class="meta">⚔️ ${m.bounties} completed bounties</p>
+          <p><b>🏆 Achievements (${earned.length}/6)</b></p>
+          <p>${earned.length ? earned.map(a=>a.icon+' '+a.name).join(' · ') : 'No badges earned yet'}</p>
+          <p class="meta">Progress toward ${next} points</p>
+          <div style="height:10px;background:#24203b;border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#943cff,#087ee8,#ff4acb)"></div>
+          </div>
+        </details>`;
+    }).join('')
+    : '<p class="hint">Crew profiles will appear here!</p>';
 
   $('crewPodium').innerHTML = ranked.length
     ? ranked.slice(0,3).map((m,i) =>
