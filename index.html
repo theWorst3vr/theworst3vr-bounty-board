@@ -55,6 +55,36 @@
 @media(max-width:600px){
   .podium{grid-template-columns:1fr;}
 }
+.level-up-banner {
+  margin: 12px 0;
+  padding: 14px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: #fff;
+  background: linear-gradient(90deg, #7a4b00, #ffd56a, #ff4acb, #7a4b00);
+  background-size: 300% 100%;
+  border: 2px solid #ffd56a;
+  border-radius: 12px;
+  animation: levelUpGlow 2s ease-in-out infinite,
+             levelUpShine 3s linear infinite;
+}
+
+@keyframes levelUpGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px #ffd56a;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 25px #ffd56a, 0 0 40px #ff4acb;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes levelUpShine {
+  from { background-position: 0% 50%; }
+  to { background-position: 300% 50%; }
+}
 </style>
 </head>
 <body>
@@ -104,7 +134,7 @@
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let isCaptain = false, currentFilter = 'all', cached = [];
+  let isCaptain = false, currentFilter = 'all', cached = [], crewProgress = {};
   function message(id, text, type='') { const el=$(id); el.className='notice '+type; el.textContent=text; }
   function dateLabel(value){return value ? new Date(value).toLocaleDateString() : '';}
   function filtered(items){return items.filter(x => currentFilter==='all' || x.status===currentFilter);}
@@ -177,6 +207,25 @@
   m.points >= 50 ? '⚔️ A PIRATE WARRIOR HAS RISEN!' :
   '🏴‍☠️ THE JOURNEY BEGINS!';
       const xpLevel = Math.floor(m.xp / 100) + 1;
+      const savedLevel = crewProgress[m.name];
+const previousLevel = savedLevel ?? xpLevel;
+const leveledUp = xpLevel > previousLevel;
+
+if (isCaptain && savedLevel === undefined) {
+  crewProgress[m.name] = xpLevel;
+  client.from('crew_progress').upsert({
+    viewer: m.name,
+    xp: m.xp,
+    last_celebrated_level: xpLevel
+  }, {onConflict:'viewer'});
+} else if (isCaptain && leveledUp) {
+  crewProgress[m.name] = xpLevel;
+  client.from('crew_progress').upsert({
+    viewer: m.name,
+    xp: m.xp,
+    last_celebrated_level: xpLevel
+  }, {onConflict:'viewer'});
+}
 const xpNext = xpLevel * 100;
 const xpProgress = m.xp % 100;
 
@@ -194,11 +243,15 @@ const xpTitle =
   xpLevel >= 3 ? '⚔️ A PIRATE WARRIOR HAS AWAKENED!' :
   xpLevel >= 2 ? '🏴‍☠️ A NEW DECKHAND HAS JOINED THE CREW!' :
   '⚓ THE JOURNEY BEGINS!';
+      const levelUpBanner = leveledUp
+  ? `<div class="level-up-banner">🎉 LEVEL UP! ${xpTitle} 🎉</div>`
+  : '';
       return `
         <details class="entry">
           <summary><b>🏴‍☠️ ${esc(m.name)}</b> — <b>${crewRank}</b> — ${m.points} points</summary>
           <p class="meta">⭐ Level ${xpLevel} — ${xpTitle}</p>
           <p class="meta"><b>${xpAnnouncement}</b></p>
+          ${levelUpBanner}
 <p class="meta">${m.xp} XP / ${xpNext} XP to next level</p>
 <div style="height:10px;background:#24203b;border-radius:10px;overflow:hidden">
   <div style="height:100%;width:${xpProgress}%;background:linear-gradient(90deg,#ffd56a,#ff4acb)"></div>
@@ -244,6 +297,13 @@ const xpTitle =
     const {data,error}=await query;
     if(error){$('connectionStatus').textContent='Database error: '+error.message;return;}
     cached=data||[];
+    const {data:progressData}=await client
+  .from('crew_progress')
+  .select('viewer,last_celebrated_level');
+
+crewProgress=Object.fromEntries(
+  (progressData||[]).map(p=>[p.viewer,p.last_celebrated_level])
+);
     renderLeaderboard(cached);
     const publicItems=cached.filter(x=>x.status!=='pending');
     $('count').textContent='('+cached.filter(x=>x.status==='approved').length+' active)';
