@@ -211,7 +211,8 @@
 const previousLevel = savedLevel ?? xpLevel;
 const leveledUp = xpLevel > previousLevel;
 
-if (isCaptain && savedLevel === undefined) {
+console.log('CREW SAVE CHECK:', {isCaptain, name:m.name, savedLevel, crewProgress});
+      if (isCaptain && savedLevel === undefined) {
   crewProgress[m.name] = xpLevel;
   client.from('crew_progress').upsert({
     viewer: m.name,
