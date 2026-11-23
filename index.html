@@ -116,9 +116,16 @@
   m.points >= 250 ? '💎 Grand Line Veteran' :
   m.points >= 50 ? '⚔️ Pirate Warrior' :
   '🏴‍☠️ Rookie Pirate';
+      const rankAnnouncement =
+  m.points >= 2500 ? '👑 THE PIRATE KING HAS RISEN!' :
+  m.points >= 1000 ? '🔥 A SEA LEGEND HAS EMERGED!' :
+  m.points >= 250 ? '💎 A NEW GRAND LINE VETERAN!' :
+  m.points >= 50 ? '⚔️ A PIRATE WARRIOR HAS RISEN!' :
+  '🏴‍☠️ THE JOURNEY BEGINS!';
       return `
         <details class="entry">
           <summary><b>🏴‍☠️ ${esc(m.name)}</b> — <b>${crewRank}</b> — ${m.points} points</summary>
+          <p class="meta"><b>${rankAnnouncement}</b></p>
           <p class="meta">⚔️ ${m.bounties} completed bounties</p>
           <p><b>🏆 Achievements (${earned.length}/6)</b></p>
           <p>${earned.length ? earned.map(a=>a.icon+' '+a.name).join(' · ') : 'No badges earned yet'}</p>
