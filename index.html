@@ -8,6 +8,53 @@
 :root{--bg:#08091b;--panel:#100d2bee;--purple:#943cff;--blue:#087ee8;--pink:#ff4acb;--gold:#ffd56a;--muted:#bcb4dc;--green:#3fdb91;--red:#ff6688}
 *{box-sizing:border-box}body{margin:0;padding:18px;background:radial-gradient(ellipse at top,#28104c 0%,#08091b 65%);background-attachment:fixed;color:#fff;font:16px Arial,sans-serif}main{max-width:1100px;margin:auto}h1{text-align:center;font-size:clamp(28px,5vw,48px);text-shadow:0 0 12px #f2c,0 0 22px #09f;margin:12px 0}header>p{text-align:center;color:#d8d5ff;margin:0 0 22px}.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}.panel{background:var(--panel);border:2px solid var(--purple);border-radius:16px;padding:16px;box-shadow:0 0 18px #922aff55;margin-bottom:14px;min-width:0}h2{color:var(--gold);margin:0 0 12px;font-size:21px}label{display:block;color:#d9d5ff;font-size:12px;font-weight:bold;margin:10px 0 4px}input,textarea,select{width:100%;padding:11px;border-radius:8px;background:#08091e;color:white;border:1px solid #7852c9;font:inherit}textarea{min-height:75px;resize:vertical}button,.btn{border:0;border-radius:9px;padding:10px 13px;color:white;background:linear-gradient(100deg,#922cff,#087ee8);font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block;margin:3px}button:disabled{opacity:.5;cursor:not-allowed}button.alt,.btn.alt{background:#30234f}button.red{background:#78274d}.entry{background:#090a20;border:1px solid #7651bc;border-radius:10px;padding:12px;margin:9px 0;overflow-wrap:anywhere}.entry.pending{border-color:#ffbd55}.entry.done{border-color:var(--green);opacity:.85}.meta,.hint{color:var(--muted);font-size:12px;line-height:1.5}.tag{font-size:11px;color:var(--gold);font-weight:bold}.notice{padding:9px;border-radius:8px;background:#201a3b;color:#e8dcff;margin-top:10px;font-size:13px}.notice.error{background:#421b30;color:#ffd7e1}.notice.good{background:#123a32;color:#c9ffea}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row .spacer{flex:1}.hidden{display:none!important}.status{font-size:12px;color:var(--muted);text-align:center;margin:10px}.lock{border:1px dashed #9b78d5;border-radius:10px;padding:13px;color:#ddd5ff}.stats{line-height:1.8;color:var(--muted);font-size:13px}.topline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.captain-badge{color:var(--gold);font-size:12px;font-weight:bold}
 @media(max-width:760px){.grid{grid-template-columns:1fr}body{padding:9px}.panel{padding:13px}}
+  .podium{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin:15px 0;
+}
+.podium-card{
+  padding:20px 12px;
+  text-align:center;
+  border:2px solid var(--purple);
+  border-radius:14px;
+  background:#100d2b;
+  transition:transform .25s,box-shadow .25s;
+}
+.podium-card:hover{
+  transform:translateY(-5px);
+}
+.podium-card.gold{
+  border-color:#ffd700;
+  box-shadow:0 0 18px #ffd70055;
+  animation:championGlow 2s infinite alternate;
+}
+.podium-card.silver{
+  border-color:#c0c0c0;
+  box-shadow:0 0 14px #c0c0c055;
+}
+.podium-card.bronze{
+  border-color:#cd7f32;
+  box-shadow:0 0 14px #cd7f3255;
+}
+.podium-medal{
+  font-size:38px;
+  margin-bottom:10px;
+}
+.podium-place{
+  margin-top:10px;
+  font-weight:bold;
+  font-size:12px;
+  color:var(--gold);
+}
+@keyframes championGlow{
+  from{box-shadow:0 0 8px #ffd70055;}
+  to{box-shadow:0 0 25px #ffd700cc;}
+}
+@media(max-width:600px){
+  .podium{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -138,10 +185,18 @@
     : '<p class="hint">Crew profiles will appear here!</p>';
 
   $('crewPodium').innerHTML = ranked.length
-    ? ranked.slice(0,3).map((m,i) =>
-      `<div class="entry"><b>${['🥇','🥈','🥉'][i]} ${esc(m.name)}</b><p class="meta">${m.points} points · ${m.bounties} completed bounties</p></div>`
-    ).join('')
-    : '<p class="hint">The crew legends will appear here!</p>';
+  ? `<div class="podium">
+      ${ranked.slice(0,3).map((m,i) => `
+        <div class="podium-card ${['gold','silver','bronze'][i]}">
+          <div class="podium-medal">${['🥇','🥈','🥉'][i]}</div>
+          <b>${esc(m.name)}</b>
+          <p class="meta">${m.points} points</p>
+          <p class="meta">${m.bounties} completed bounties</p>
+          <div class="podium-place">${['CHAMPION','2ND PLACE','3RD PLACE'][i]}</div>
+        </div>
+      `).join('')}
+    </div>`
+  : '<p class="hint">The crew legends will appear here!</p>';
 
   $('crewRankings').innerHTML = ranked.slice(3).map((m,i) =>
     `<div class="entry"><b>#${i+4} ${esc(m.name)}</b><p class="meta">${m.points} points · ${m.bounties} completed</p></div>`
