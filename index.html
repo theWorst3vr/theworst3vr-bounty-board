@@ -211,15 +211,21 @@
 const previousLevel = savedLevel ?? xpLevel;
 const leveledUp = xpLevel > previousLevel;
 
-console.log('CREW SAVE CHECK:', {isCaptain, name:m.name, savedLevel, crewProgress});
-      if (isCaptain && savedLevel === undefined) {
-  crewProgress[m.name] = xpLevel;
+if (isCaptain && savedLevel === undefined) {
   client.from('crew_progress').upsert({
     viewer: m.name,
     xp: m.xp,
     last_celebrated_level: xpLevel
-  }, {onConflict:'viewer'});
+  }, {onConflict:'viewer'}).then(({error:saveError}) => {
+    if (saveError) {
+      console.error('CREW SAVE ERROR:', saveError);
+    } else {
+      console.log('CREW SAVE SUCCESS:', m.name);
+      crewProgress[m.name] = xpLevel;
+    }
+  });
 } else if (isCaptain && leveledUp) {
+
   crewProgress[m.name] = xpLevel;
   client.from('crew_progress').upsert({
     viewer: m.name,
