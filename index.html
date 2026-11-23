@@ -187,10 +187,18 @@ const xpTitle =
   xpLevel >= 3 ? '⚔️ Pirate Warrior' :
   xpLevel >= 2 ? '🏴‍☠️ Deckhand' :
   '⚓ Rookie';
+      const xpAnnouncement =
+  xpLevel >= 10 ? '👑 THE PIRATE KING HAS ARRIVED!' :
+  xpLevel >= 7 ? '🔥 A SEA LEGEND HAS RISEN!' :
+  xpLevel >= 5 ? '💎 A GRAND LINE VETERAN HAS EMERGED!' :
+  xpLevel >= 3 ? '⚔️ A PIRATE WARRIOR HAS AWAKENED!' :
+  xpLevel >= 2 ? '🏴‍☠️ A NEW DECKHAND HAS JOINED THE CREW!' :
+  '⚓ THE JOURNEY BEGINS!';
       return `
         <details class="entry">
           <summary><b>🏴‍☠️ ${esc(m.name)}</b> — <b>${crewRank}</b> — ${m.points} points</summary>
           <p class="meta">⭐ Level ${xpLevel} — ${xpTitle}</p>
+          <p class="meta"><b>${xpAnnouncement}</b></p>
 <p class="meta">${m.xp} XP / ${xpNext} XP to next level</p>
 <div style="height:10px;background:#24203b;border-radius:10px;overflow:hidden">
   <div style="height:100%;width:${xpProgress}%;background:linear-gradient(90deg,#ffd56a,#ff4acb)"></div>
