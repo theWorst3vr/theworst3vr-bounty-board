@@ -132,13 +132,20 @@
   function renderLeaderboard(items){
   const totals = new Map();
 
-  items.filter(x => x.status === 'done').forEach(x => {
-    const name = String(x.viewer || 'Unknown crew').trim();
-    const member = totals.get(name) || {points:0,bounties:0};
+ items.filter(x => ['approved','done'].includes(x.status)).forEach(x => {
+  const name = String(x.viewer || 'Unknown crew').trim();
+  const member = totals.get(name) || {points:0,bounties:0,xp:0};
+
+  member.xp += 10;
+
+  if(x.status === 'done'){
     member.points += Number(x.points_awarded) || 0;
     member.bounties += 1;
-    totals.set(name,member);
-  });
+    member.xp += 25;
+  }
+
+  totals.set(name,member);
+});
 
   const ranked = [...totals.entries()]
     .map(([name,data]) => ({name,...data}))
@@ -169,9 +176,25 @@
   m.points >= 250 ? '💎 A NEW GRAND LINE VETERAN!' :
   m.points >= 50 ? '⚔️ A PIRATE WARRIOR HAS RISEN!' :
   '🏴‍☠️ THE JOURNEY BEGINS!';
+      const xpLevel = Math.floor(m.xp / 100) + 1;
+const xpNext = xpLevel * 100;
+const xpProgress = m.xp % 100;
+
+const xpTitle =
+  xpLevel >= 10 ? '👑 Pirate King' :
+  xpLevel >= 7 ? '🔥 Sea Legend' :
+  xpLevel >= 5 ? '💎 Grand Line Veteran' :
+  xpLevel >= 3 ? '⚔️ Pirate Warrior' :
+  xpLevel >= 2 ? '🏴‍☠️ Deckhand' :
+  '⚓ Rookie';
       return `
         <details class="entry">
           <summary><b>🏴‍☠️ ${esc(m.name)}</b> — <b>${crewRank}</b> — ${m.points} points</summary>
+          <p class="meta">⭐ Level ${xpLevel} — ${xpTitle}</p>
+<p class="meta">${m.xp} XP / ${xpNext} XP to next level</p>
+<div style="height:10px;background:#24203b;border-radius:10px;overflow:hidden">
+  <div style="height:100%;width:${xpProgress}%;background:linear-gradient(90deg,#ffd56a,#ff4acb)"></div>
+</div>
           <p class="meta"><b>${rankAnnouncement}</b></p>
           <p class="meta">⚔️ ${m.bounties} completed bounties</p>
           <p><b>🏆 Achievements (${earned.length}/6)</b></p>
